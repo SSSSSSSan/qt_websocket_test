@@ -7,6 +7,7 @@ class wsc : public QObject
      Q_OBJECT
 public:
     wsc();
+    ~wsc();
 };
 
 #endif // WSC_H
