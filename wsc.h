@@ -3,7 +3,7 @@
 
 #include <QObject>
 
-class wsc
+class wsc : public QObject
 {
     Q_OBJECT
 public:
