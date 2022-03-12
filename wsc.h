@@ -1,10 +1,11 @@
 ﻿#ifndef WSC_H
 #define WSC_H
+
 #include <QObject>
-#include <QWebSocket>
-class wsc : public QObject
+
+class wsc
 {
-     Q_OBJECT
+    Q_OBJECT
 public:
     wsc();
     ~wsc();
