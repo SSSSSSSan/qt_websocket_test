@@ -27,23 +27,25 @@ bool wss::init(uint16_t port)
 void wss::onNewConnection()//新链接
 {
     qDebug();
+//  /*
 
-    QWebSocket * socket(this->server->nextPendingConnection());
-    connect(socket,&QWebSocket::textMessageReceived,
+
+//  */
+    QWebSocket * pWebSocket(this->server->nextPendingConnection());
+    QString key=QString("%1-%2")
+            .arg(pWebSocket->peerAddress().toString())
+            .arg(pWebSocket->peerPort());
+    connect(pWebSocket,&QWebSocket::textMessageReceived,
             this, &wss::processTextMessage);
-    connect(socket, &QWebSocket::binaryMessageReceived,
+    connect(pWebSocket, &QWebSocket::binaryMessageReceived,
             this, &wss::processBinauyMessage);
-    connect(socket,&QWebSocket::disconnected,
+    connect(pWebSocket,&QWebSocket::disconnected,
             this, &wss::socketDisconnected);
     qDebug()<<"newConnection"<<QString("%1-%2")
-              .arg(socket->peerAddress().toString())
-              .arg(socket->peerPort());
-    ++connections;
-    _hashIpPort2PWebSocket.insert(QString("%1-%2")
-                                  .arg(socket->peerAddress().toString())
-                                  .arg(socket->peerPort())
-                                  ,socket);
-    qDebug()<<connections<<_hashIpPort2PWebSocket.size();
+              .arg(pWebSocket->peerAddress().toString())
+              .arg(pWebSocket->peerPort());
+    _hashIpPort2PWebSocket.insert(key,pWebSocket);
+    emit signal_newConnection(pWebSocket->peerAddress().toString(),pWebSocket->peerPort());
 }
 void wss::processTextMessage(const QString & msg)//收到文字数据
 {
@@ -52,18 +54,17 @@ void wss::processTextMessage(const QString & msg)//收到文字数据
     {
         return;
     }
-    qDebug()<<"new binauy msg:"<<pWebSocket->peerAddress().toString()
+    qDebug()<<"new Text msg:"<<pWebSocket->peerAddress().toString()
             <<pWebSocket->peerPort()
             <<msg;
-    emit signal_processTextMessage(pWebSocket->peerAddress().toString()
-                                   ,pWebSocket->peerPort()
-                                   ,msg);
-    return;
     //复读机
     QString rmsg="rap"+msg;
     this->slot_sendText(pWebSocket->peerAddress().toString()
                   ,pWebSocket->peerPort()
                   ,rmsg);
+    emit signal_processTextMessage(pWebSocket->peerAddress().toString()
+                                   ,pWebSocket->peerPort()
+                                   ,msg);
 }
 void wss::processBinauyMessage(const QByteArray & msg)//收到二进制数据
 {
@@ -76,18 +77,18 @@ void wss::processBinauyMessage(const QByteArray & msg)//收到二进制数据
     qDebug()<<"new binauy msg:"<<pWebSocket->peerAddress().toString()
             <<pWebSocket->peerPort()
             <<msg;
+    //复读机
+    //QByteArray rmsg=msg;
+    this->slot_sendData(pWebSocket->peerAddress().toString()
+                  ,pWebSocket->peerPort()
+                  ,msg);
     emit signal_processBinauyMessage(pWebSocket->peerAddress().toString()
                                          ,pWebSocket->peerPort()
                                          ,msg);
-    //return;
-    //复读机
-    QByteArray rmsg=msg;
-    this->slot_sendData(pWebSocket->peerAddress().toString()
-                  ,pWebSocket->peerPort()
-                  ,rmsg);
 }
 int wss::slot_sendText(QString ip, quint16 port, QString msg)
 {
+    qDebug()<<"sendText"<<QString("%1-%2").arg(ip).arg(port)<<msg;
     QString key = QString("%1-%2").arg(ip).arg(port);
     if(_hashIpPort2PWebSocket.contains(key))
     {
@@ -101,6 +102,7 @@ int wss::slot_sendText(QString ip, quint16 port, QString msg)
 }
 int wss::slot_sendData(QString ip, quint16 port, QByteArray msg)
 {
+    qDebug()<<"sendData"<<QString("%1-%2").arg(ip).arg(port)<<msg;
     QString key = QString("%1-%2").arg(ip).arg(port);
     if(_hashIpPort2PWebSocket.contains(key))
     {
@@ -112,9 +114,16 @@ int wss::slot_sendData(QString ip, quint16 port, QByteArray msg)
     }
     return -1;
 }
-void wss::slot_discennect(QString ip, quint16 port)
+int wss::slot_discennect(QString ip, quint16 port)
 {
-
+    QString key = QString("%1-%2").arg(ip).arg(port);
+    if(_hashIpPort2PWebSocket.contains(key))
+    {
+        _hashIpPort2PWebSocket.value(key)->close();
+        return 0;
+    }else{
+        return -1;
+    }
 }
 void wss::socketDisconnected()//有个链接被关闭
 {
@@ -129,8 +138,6 @@ void wss::socketDisconnected()//有个链接被关闭
                                   .arg(pWebSocket->peerAddress().toString())
                                   .arg(QString::number(pWebSocket->peerPort()))
                                   );
-    --connections;
-    qDebug()<<connections<<_hashIpPort2PWebSocket.size();
     emit signal_pDiscennect(pWebSocket->peerAddress().toString()
                             ,pWebSocket->peerPort());
 }

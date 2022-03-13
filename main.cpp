@@ -8,6 +8,7 @@ int main(int argc, char *argv[])
     //demo();
     wss * mywss = new wss();
     mywss->init(12345);
+
     return a.exec();
 }
 

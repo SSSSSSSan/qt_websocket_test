@@ -1,4 +1,6 @@
-QT -= gui
+QT += gui
+#QT += core
+QT += widgets
 QT += websockets
 CONFIG += c++11 console
 CONFIG -= app_bundle
@@ -20,3 +22,5 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 HEADERS += \
     wsc.h \
     wss.h
+
+FORMS +=
