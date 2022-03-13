@@ -14,15 +14,14 @@ class wss : public QObject
 public:
     wss();
     ~wss();
-
+    bool init(quint16 port);
     int connections(){return _hashIpPort2PWebSocket.size();};//当前连接数
+private:
+public:
 private:
     uint16_t port;
     QWebSocketServer * server=nullptr;
     QHash<QString, QWebSocket*> _hashIpPort2PWebSocket;
-public:
-    bool init(quint16 port);
-private:
 
 signals:
     void signal_newConnection(QString ip,quint16 port);//新链接
