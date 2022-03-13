@@ -1,6 +1,5 @@
-QT += gui
+QT -= gui
 QT += core
-QT += network
 QT += websockets
 CONFIG += c++11 console
 CONFIG -= app_bundle
@@ -23,4 +22,3 @@ HEADERS += \
     wsc.h \
     wss.h
 
-FORMS +=
