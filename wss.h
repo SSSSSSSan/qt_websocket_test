@@ -21,7 +21,7 @@ private:
     QHash<QString, QWebSocket*> hashIpPort2PWebSocket;
 
 signals:
-    void signal_newConnection(QString ip,quint16 port);//新链接
+    void signal_newConnection(QString ip,quint16 port,QUrl url);//新链接
     void signal_processTextMessage(QString ip, quint16 port, QString msg);//收到文字信息
     void signal_processBinauyMessage(QString ip, quint16 port, QByteArray buffer);//收到二进制数据
     void signal_pDiscennect(QString ip, quint16 port);//该客户端断开链接

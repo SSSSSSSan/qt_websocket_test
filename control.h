@@ -15,6 +15,12 @@ public:
 private:
     wss * mywss=nullptr;
 
+signals:
+
+public slots:
+
+private slots:
+    void slots_newU(QString ip,quint16 port,QUrl url);
 };
 
 #endif // CONTROL_H

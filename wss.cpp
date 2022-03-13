@@ -26,13 +26,8 @@ bool wss::init(uint16_t port)
 }
 void wss::onNewConnection()//新链接
 {
-    //qDebug();
-//  /*
 
-
-//  */
     QWebSocket * pWebSocket(this->server->nextPendingConnection());
-
     QString key=QString("%1-%2")
             .arg(pWebSocket->peerAddress().toString())
             .arg(pWebSocket->peerPort());    
@@ -46,7 +41,7 @@ void wss::onNewConnection()//新链接
               .arg(pWebSocket->peerAddress().toString())
               .arg(pWebSocket->peerPort());
     hashIpPort2PWebSocket.insert(key,pWebSocket);
-    emit signal_newConnection(pWebSocket->peerAddress().toString(),pWebSocket->peerPort());
+    emit signal_newConnection(pWebSocket->peerAddress().toString(),pWebSocket->peerPort(),pWebSocket->requestUrl());
 }
 void wss::processTextMessage(const QString & msg)//收到文字数据
 {
@@ -59,10 +54,10 @@ void wss::processTextMessage(const QString & msg)//收到文字数据
             <<pWebSocket->peerPort()
             <<msg;
     //复读机
-    QString rmsg="rap"+msg;
-    this->slot_sendText(pWebSocket->peerAddress().toString()
-                  ,pWebSocket->peerPort()
-                  ,rmsg);
+//    QString rmsg="rap"+msg;
+//    this->slot_sendText(pWebSocket->peerAddress().toString()
+//                  ,pWebSocket->peerPort()
+//                  ,rmsg);
     emit signal_processTextMessage(pWebSocket->peerAddress().toString()
                                    ,pWebSocket->peerPort()
                                    ,msg);
@@ -79,10 +74,10 @@ void wss::processBinauyMessage(const QByteArray & msg)//收到二进制数据
             <<pWebSocket->peerPort()
             <<msg;
     //复读机
-    QByteArray rmsg=msg;
-    this->slot_sendData(pWebSocket->peerAddress().toString()
-                  ,pWebSocket->peerPort()
-                  ,msg);
+//    QByteArray rmsg=msg;
+//    this->slot_sendData(pWebSocket->peerAddress().toString()
+//                  ,pWebSocket->peerPort()
+//                  ,msg);
     emit signal_processBinauyMessage(pWebSocket->peerAddress().toString()
                                          ,pWebSocket->peerPort()
                                          ,msg);
