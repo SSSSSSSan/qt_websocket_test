@@ -53,14 +53,20 @@ void wss::processTextMessage(const QString & msg)//收到文字数据
     qDebug()<<"new Text msg:"<<pWebSocket->peerAddress().toString()
             <<pWebSocket->peerPort()
             <<msg;
+    if(msg=="PING")
+    {
+        this->slot_sendText(pWebSocket->peerAddress().toString(),pWebSocket->peerPort(),"PONG");
+    }else{
+        emit signal_processTextMessage(pWebSocket->peerAddress().toString()
+                                       ,pWebSocket->peerPort()
+                                       ,msg);
+    }
     //复读机
 //    QString rmsg="rap"+msg;
 //    this->slot_sendText(pWebSocket->peerAddress().toString()
 //                  ,pWebSocket->peerPort()
 //                  ,rmsg);
-    emit signal_processTextMessage(pWebSocket->peerAddress().toString()
-                                   ,pWebSocket->peerPort()
-                                   ,msg);
+
 }
 void wss::processBinauyMessage(const QByteArray & msg)//收到二进制数据
 {
@@ -129,7 +135,8 @@ void wss::socketDisconnected()//有个链接被关闭
         return;
     }
     qDebug()<<"Disconnected:"
-            <<pWebSocket->peerAddress().toString()+"-"+QString::number(pWebSocket->peerPort());
+            <<pWebSocket->peerAddress().toString()+"-"+QString::number(pWebSocket->peerPort())
+            <<pWebSocket->peerName();
     hashIpPort2PWebSocket.remove(QString("%1-%2")
                                   .arg(pWebSocket->peerAddress().toString())
                                   .arg(QString::number(pWebSocket->peerPort()))
