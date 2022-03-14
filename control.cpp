@@ -5,7 +5,7 @@
 #include <QJsonObject>
 #include <QJsonDocument>
 #include <QJsonArray>
-
+#include <QThread>
 //class room
 int room::userIn(QString id)
 {
@@ -123,6 +123,8 @@ void control::slot_newU(QString address,quint16 ip,QUrl url)
     puserInfo->address=address;
     puserInfo->ip=ip;
     puserInfo->id=query.queryItemValue("id");
+    QThread * tuserInfo;
+    puserInfo->moveToThread(tuserInfo);
     _hashId2Key.insert(query.queryItemValue("id"),new QString(address+QString::number(ip)));
     _hashUserInfo.insert(address+QString::number(ip),puserInfo);
 }
@@ -132,10 +134,11 @@ void control::slot_delU(QString address,quint16 ip)
     if(_hashUserInfo.contains(key))
     {
         QString id=_hashUserInfo.value(key)->id;
-        qDebug()<<key<<id;
+        qDebug()<<"delete"<<key<<id;
         emit this->signal_userSignOut(id);
-        _hashId2Key.value(id)->~QString();
-        _hashUserInfo.value(key)->~userInfo();
+        //_hashId2Key.value(id)->~QString();
+        //_hashUserInfo.value(key)->~userInfo();
+        _hashUserInfo.value(key)->deleteLater();
         _hashId2Key.remove(id);
         _hashUserInfo.remove(key);
         //qDebug()<<"userSignOut";
