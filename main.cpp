@@ -9,6 +9,8 @@ int main(int argc, char *argv[])
     //mywss->init(12345);
     control * wssConcrol = new control;
     wssConcrol->init();
+    //wsc * mywsc = new wsc();
+
     return a.exec();
 }
 

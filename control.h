@@ -13,6 +13,7 @@ public:
     void userOut(QString id);
     int userIn(QString id);
 signals:
+    //此房间应该转发的消息提交给control处理
     void textForward(QString toId,QString msg);
     void dataForward(QString toId,QByteArray msg);
 public slots:
@@ -43,10 +44,6 @@ signals:
     //转发此用户的消息
     void sendText(QString msg);
     void sendData(QByteArray msg);
-//public slots:
-//    //此用户应收到此消息
-//    void receivedtext(QString msg);
-//    void receivedData(QByteArray msg);
 public slots:
 
 };

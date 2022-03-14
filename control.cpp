@@ -38,8 +38,7 @@ void room::sendData(QByteArray msg)
 //class userInfo
 userInfo::~userInfo()
 {
-    disconnect(this,0,0,0);
-    disconnect(0,0,this,0);
+    this->disconnect();
     if(joining)exitRoom();
 };
 room * userInfo::createRoom()
@@ -147,7 +146,7 @@ void control::slot_delU(QString address,quint16 ip)
 void control::slot_receivedText(QString address,quint16 ip,QString msg)
 {
     QJsonParseError err_rpt;
-    QJsonDocument  Doc = QJsonDocument::fromJson(msg.toLocal8Bit(), &err_rpt);//字符串格式化为JSON
+    QJsonDocument  Doc = QJsonDocument::fromJson(msg.toStdString().c_str(), &err_rpt);//字符串格式化为JSON
     if(err_rpt.error != QJsonParseError::NoError)
     {
         qDebug() << "JSON格式错误";
@@ -167,16 +166,21 @@ void control::msgControl(QJsonDocument jdc,QString id)
     qDebug()<<id<<_hashId2Key.contains(id);
     if(!_hashId2Key.contains(id))return;
     //qDebug()<<jdc.object().find("connectTo");
-    if(jdc.object().find("massage")->isString())
+    if(jdc.object().find("message")->isString())
     {
-        QString msg=jdc.object().find("massage")->toString();
+        QString msg=jdc.object().find("message")->toString();
         qDebug()<<id<<"发来消息"<<msg;
         if(_hashUserInfo.value(_hashId2Key.value(id)->toStdString().c_str())->inroom)
         {
             qDebug()<<"向room"<<_hashUserInfo.value(_hashId2Key.value(id)->toStdString().c_str())
-                      ->joining<<"发送消息";
+                      ->joining<<"发送消息"<<msg;
+            QJsonDocument jdc;
+            QJsonObject job;
+            job.insert("message",msg);
+            job.insert("sender",id);
+            jdc.setObject(job);
            emit _hashUserInfo.value(_hashId2Key.value(id)->toStdString().c_str())
-                    ->sendText(msg);
+                    ->sendText(jdc.toJson().toStdString().c_str());
         }
         return;//普通消息转发立即返回
     }
