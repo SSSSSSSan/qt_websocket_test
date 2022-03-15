@@ -56,7 +56,7 @@ void wss::processTextMessage(const QString & msg)//收到文字数据
     {
         return;
     }
-    qDebug()<<"new Text msg:"<<pWebSocket->peerAddress().toString()
+    qDebug().noquote()<<"new Text msg:"<<pWebSocket->peerAddress().toString()
             <<pWebSocket->peerPort()
             <<msg;
     if(msg=="PING")
@@ -82,8 +82,8 @@ void wss::processBinauyMessage(const QByteArray & msg)//收到二进制数据
     {
         return;
     }
-    //qDebug()<<"new binauy msg:"<<pWebSocket->peerAddress().toString()
-    //      <<pWebSocket->peerPort()
+    qDebug()<<"new binauy msg:"<<pWebSocket->peerAddress().toString()
+          <<pWebSocket->peerPort();
     //      <<msg;
     //复读机
 //    QByteArray rmsg=msg;
@@ -110,12 +110,12 @@ int wss::slot_sendText(QString ip, quint16 port, QString msg)
 }
 int wss::slot_sendData(QString ip, quint16 port, QByteArray msg)
 {
-    //qDebug()<<"sendData"<<QString("%1-%2").arg(ip).arg(port)<<msg;
+    qDebug()<<"sendData"<<QString("%1-%2").arg(ip).arg(port);//<<msg;
     QString key = QString("%1-%2").arg(ip).arg(port);
     if(hashIpPort2PWebSocket.contains(key))
     {
         qint64 size=hashIpPort2PWebSocket.value(key)->sendBinaryMessage(msg);
-        //qDebug()<<"发送了"<<size<<"大小的数据";
+        //qDebug()<<"发送了"<<size<<"大小的数据到"<<ip+"-"+port;
         return 0;
     }else{
         qDebug()<<"rep binary fail";

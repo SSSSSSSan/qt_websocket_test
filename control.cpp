@@ -27,7 +27,7 @@ void room::sendText(QString msg)
     {
         if(ids.at(i)!=senderId->id)
         {
-            qDebug()<<ids.at(i)<<msg;
+            qDebug().noquote()<<ids.at(i)<<msg;
             emit textForward(ids.at(i),msg);
         }
     }
@@ -52,15 +52,9 @@ userInfo::~userInfo()
 room * userInfo::createRoom()
 {
     joining = new room;
-    joining->ids<<id;
     qDebug()<<id<<"createroom"<<joining;
-    inroom = true;
-    connect(this,&userInfo::sendText
-            ,joining,&room::sendText);
-    connect(this,&userInfo::sendData
-            ,joining,&room::sendData);
+    this->joinRoom(joining);
     return joining;
-
 };
 void userInfo::joinRoom(room * uroom)
 {
@@ -113,6 +107,8 @@ bool control::init()
                 ,this,&control::slot_delU);
         connect(mywss,&wss::signal_processTextMessage
                 ,this,&control::slot_receivedText);
+        connect(mywss,&wss::signal_processBinauyMessage
+                ,this,&control::slot_receivedData);
         connect(this,&control::signal_sendText
                 ,mywss,&wss::slot_sendText);
         connect(this,&control::signal_sendData
@@ -184,7 +180,7 @@ void control::msgControl(QJsonDocument jdc,QString id)
     if(jdc.object().find("message2room")->isString())
     {
         QString msg=jdc.object().find("message2room")->toString();
-        qDebug()<<id<<"发来消息"<<msg;
+        qDebug().noquote()<<id<<"发来消息"<<msg;
         if(_hashUserInfo.value(_hashId2Key.value(id)->toStdString().c_str())->inroom)
         {
             qDebug()<<"向room"<<_hashUserInfo.value(_hashId2Key.value(id)->toStdString().c_str())
@@ -226,14 +222,13 @@ void control::msgControl(QJsonDocument jdc,QString id)
     }
     if(!jdc.object().find("control")->isNull())this->msgControl_control(jdc.object().find("control")->toObject(),id);
 
-
-
-
 }
 void control::msgControl_control(QJsonObject job, QString id)
 {
-    if(!job.find("exitRoom")->toInt()==1)
+    qDebug().noquote()<<job;
+    if(job.find("exitRoom")->toInt()==1)
     {
+        //{"control":{"exitRoom":1}}
         if(_hashId2Key.contains(id))
         {
             if(_hashUserInfo.value(_hashId2Key.value(id)->toStdString().c_str())->inroom)
@@ -255,6 +250,24 @@ void control::msgControl_control(QJsonObject job, QString id)
         }else{
             qDebug()<<"can't connect to "<<connectToId<<"noFound";
         }
+    }
+
+    if(job.find("teammate")->toInt()==1)
+    {
+        //{"control":{"teameate":1}}
+        QJsonDocument jdc;
+        QJsonArray jay;
+        QStringList ids = _hashUserInfo.value(_hashId2Key.value(id)->toStdString().c_str())->joining->ids;
+        for(int i=0;i<ids.size();++i)
+        {
+            jay<<ids.at(i);
+        }
+        jdc.setArray(jay);
+        QString address=_hashUserInfo.value(_hashId2Key.value(id)->toStdString().c_str())->address;
+        quint16 ip = _hashUserInfo.value(_hashId2Key.value(id)->toStdString().c_str())->ip;
+        QString msg = jdc.toJson().toStdString().c_str();
+        //qDebug().noquote()<<address<<ip<<msg;
+        emit signal_sendText(address,ip,msg);
     }
 }
 void control::slot_connectToUser(QString id1,QString id2)
@@ -307,6 +320,7 @@ void control::slot_textForward(QString toId,QString msg)
 }
 void control::slot_dataForward(QString toId,QByteArray msg)
 {
+    //qDebug()<<"转发房间音频";
     if(_hashId2Key.contains(toId))
     {
         QString address=_hashUserInfo.value(_hashId2Key.value(toId)->toStdString().c_str())->address;
