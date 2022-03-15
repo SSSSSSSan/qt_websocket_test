@@ -33,7 +33,14 @@ void room::sendText(QString msg)
 }
 void room::sendData(QByteArray msg)
 {
-
+    userInfo * senderId = dynamic_cast<userInfo *>(sender());
+    for(int i=0;i<ids.size();++i)
+    {
+        if(ids.at(i)!=senderId->id)
+        {
+            emit dataForward(ids.at(i),msg);
+        }
+    }
 }
 //class userInfo
 userInfo::~userInfo()
@@ -162,16 +169,22 @@ void control::slot_receivedText(QString address,quint16 ip,QString msg)
 }
 void control::slot_receivedData(QString address,quint16 ip,QByteArray msg)
 {
+    if(_hashUserInfo.value(address+QString::number(ip))->inroom)
+    {
+        emit _hashUserInfo.value(address+QString::number(ip))
+                 ->sendData(msg);
+    }
 
 }
 void control::msgControl(QJsonDocument jdc,QString id)
 {
     qDebug()<<id<<_hashId2Key.contains(id);
     if(!_hashId2Key.contains(id))return;
+
     //qDebug()<<jdc.object().find("connectTo");
-    if(jdc.object().find("message")->isString())
+    if(jdc.object().find("message2room")->isString())
     {
-        QString msg=jdc.object().find("message")->toString();
+        QString msg=jdc.object().find("message2room")->toString();
         qDebug()<<id<<"发来消息"<<msg;
         if(_hashUserInfo.value(_hashId2Key.value(id)->toStdString().c_str())->inroom)
         {
@@ -187,10 +200,40 @@ void control::msgControl(QJsonDocument jdc,QString id)
         }
         return;//普通消息转发立即返回
     }
-    if(jdc.object().find("connectTo")->isString())
+    if(jdc.object().find("message2id")->isString())
+    {
+        if(!_hashId2Key.contains(id))return;
+        QString msg=jdc.object().find("message2id")->toString();
+        QJsonDocument jdc;
+        QJsonObject job;
+        job.insert("message",msg);
+        job.insert("sender",id);
+        jdc.setObject(job);
+        emit signal_sendText(
+                    _hashUserInfo.value(_hashId2Key.value(id)->toStdString().c_str())->address,
+                    _hashUserInfo.value(_hashId2Key.value(id)->toStdString().c_str())->ip,
+                    msg
+                    );
+    }
+
+
+}
+void control::msgControl_control(QJsonObject job, QString id)
+{
+    if(!job.find("exitRoom")->isNull())
+    {
+        if(_hashId2Key.contains(id))
+        {
+            if(_hashUserInfo.value(_hashId2Key.value(id)->toStdString().c_str())->inroom)
+            {
+                _hashUserInfo.value(_hashId2Key.value(id)->toStdString().c_str())->exitRoom();
+            }
+        }
+    }
+    if(job.find("connectTo")->isString())
     {
 
-        QString connectToId=jdc.object().value("connectTo").toString();
+        QString connectToId=job.value("connectTo").toString();
         qDebug()<<id<<"发起对"<<connectToId<<"的connectTo请求";
         if(_hashId2Key.contains(connectToId))
         {
@@ -199,7 +242,6 @@ void control::msgControl(QJsonDocument jdc,QString id)
             qDebug()<<"can't connect to "<<connectToId<<"noFound";
         }
     }
-
 }
 void control::slot_connectToUser(QString id1,QString id2)
 {
@@ -231,8 +273,12 @@ void control::slot_connectToUser(QString id1,QString id2)
                     _hashUserInfo.value(_hashId2Key.value(id1)->toStdString().c_str())->createRoom()
                     );
     }
-    connect(_hashUserInfo.value(_hashId2Key.value(id1)->toStdString().c_str())->joining,&room::textForward
+    connect(_hashUserInfo.value(_hashId2Key.value(id1)->toStdString().c_str())->joining
+            ,&room::textForward
             ,this,&control::slot_textForward);
+    connect(_hashUserInfo.value(_hashId2Key.value(id1)->toStdString().c_str())->joining
+            ,&room::dataForward
+            ,this,&control::slot_dataForward);
 
 }
 void control::slot_textForward(QString toId,QString msg)
@@ -246,7 +292,12 @@ void control::slot_textForward(QString toId,QString msg)
 }
 void control::slot_dataForward(QString toId,QByteArray msg)
 {
-
+    if(_hashId2Key.contains(toId))
+    {
+        QString address=_hashUserInfo.value(_hashId2Key.value(toId)->toStdString().c_str())->address;
+        quint16 ip = _hashUserInfo.value(_hashId2Key.value(toId)->toStdString().c_str())->ip;
+        emit signal_sendData(address,ip,msg);
+    }
 }
 void control::slot_disConnectUser(QString id1,QString id2)
 {

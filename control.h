@@ -58,12 +58,13 @@ public:
 private:
 
     void msgControl(QJsonDocument jdc,QString id);
+    void msgControl_control(QJsonObject job,QString id);
 private:
     wss * mywss=nullptr;
 
     QHash<QString, userInfo *> _hashUserInfo;
     QHash<QString, QString *> _hashId2Key;
-    QHash<QString, room *> _hashRoom;
+    //QHash<QString, room *> _hashRoom;
 signals:
     void signal_sendText(QString address,quint16 ip,QString msg);
     void signal_sendData(QString address,quint16 ip,QByteArray msg);

@@ -81,10 +81,10 @@ void wss::processBinauyMessage(const QByteArray & msg)//收到二进制数据
     //      <<pWebSocket->peerPort()
     //      <<msg;
     //复读机
-    QByteArray rmsg=msg;
-    this->slot_sendData(pWebSocket->peerAddress().toString()
-                  ,pWebSocket->peerPort()
-                  ,msg);
+//    QByteArray rmsg=msg;
+//    this->slot_sendData(pWebSocket->peerAddress().toString()
+//                  ,pWebSocket->peerPort()
+//                  ,msg);
     emit signal_processBinauyMessage(pWebSocket->peerAddress().toString()
                                          ,pWebSocket->peerPort()
                                          ,msg);
