@@ -26,8 +26,13 @@ bool wss::init(uint16_t port)
 }
 void wss::onNewConnection()//新链接
 {
-
+    //if(鉴权通过){
     QWebSocket * pWebSocket(this->server->nextPendingConnection());
+    //}else{
+    //this->server->nextPendingConnection()->abort();
+    //return;
+    //}
+
     QString key=QString("%1-%2")
             .arg(pWebSocket->peerAddress().toString())
             .arg(pWebSocket->peerPort());    

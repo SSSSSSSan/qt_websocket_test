@@ -1,4 +1,4 @@
-#include "control.h"
+﻿#include "control.h"
 #include <QDebug>
 #include <QUrl>
 #include <QUrlQuery>
@@ -27,6 +27,7 @@ void room::sendText(QString msg)
     {
         if(ids.at(i)!=senderId->id)
         {
+            qDebug()<<ids.at(i)<<msg;
             emit textForward(ids.at(i),msg);
         }
     }
@@ -125,13 +126,13 @@ void control::slot_newU(QString address,quint16 ip,QUrl url)
     qDebug()<<address<<ip<<url;
     QUrlQuery query;
     query.setQuery( url.query());
-    //qDebug()<<query.queryItemValue("id")<<query.queryItemValue("password");
     userInfo * puserInfo = new userInfo;
     puserInfo->address=address;
     puserInfo->ip=ip;
     puserInfo->id=query.queryItemValue("id");
-    QThread * tuserInfo;
-    puserInfo->moveToThread(tuserInfo);
+    //qDebug()<<query.queryItemValue("id")<<query.queryItemValue("password");
+    //QThread * tuserInfo;
+    //puserInfo->moveToThread(tuserInfo);
     _hashId2Key.insert(query.queryItemValue("id"),new QString(address+QString::number(ip)));
     _hashUserInfo.insert(address+QString::number(ip),puserInfo);
 }
@@ -178,10 +179,8 @@ void control::slot_receivedData(QString address,quint16 ip,QByteArray msg)
 }
 void control::msgControl(QJsonDocument jdc,QString id)
 {
-    qDebug()<<id<<_hashId2Key.contains(id);
+    //qDebug()<<id<<_hashId2Key.contains(id);
     if(!_hashId2Key.contains(id))return;
-
-    //qDebug()<<jdc.object().find("connectTo");
     if(jdc.object().find("message2room")->isString())
     {
         QString msg=jdc.object().find("message2room")->toString();
@@ -192,35 +191,48 @@ void control::msgControl(QJsonDocument jdc,QString id)
                       ->joining<<"发送消息"<<msg;
             QJsonDocument jdc;
             QJsonObject job;
+            job.insert("version",1);
             job.insert("message",msg);
             job.insert("sender",id);
+            job.insert("type","room");
             jdc.setObject(job);
            emit _hashUserInfo.value(_hashId2Key.value(id)->toStdString().c_str())
                     ->sendText(jdc.toJson().toStdString().c_str());
         }
-        return;//普通消息转发立即返回
+        return;//转发立即返回
+
     }
-    if(jdc.object().find("message2id")->isString())
+    if(jdc.object().find("message2id")->isObject())
     {
-        if(!_hashId2Key.contains(id))return;
-        QString msg=jdc.object().find("message2id")->toString();
-        QJsonDocument jdc;
+        /*
+        {"message2id":{"toId":"toId","message":"message"}}
+        */
+        QString toId=jdc.object().find("message2id")->toObject().find("toId")->toString();
+        if(!_hashId2Key.contains(toId))return;
+        QString msg=jdc.object().find("message2id")->toObject().find("message")->toString();
+        QJsonDocument msgjdc;
         QJsonObject job;
+        job.insert("version",1);
         job.insert("message",msg);
         job.insert("sender",id);
-        jdc.setObject(job);
+        job.insert("type","user");
+        msgjdc.setObject(job);
         emit signal_sendText(
-                    _hashUserInfo.value(_hashId2Key.value(id)->toStdString().c_str())->address,
-                    _hashUserInfo.value(_hashId2Key.value(id)->toStdString().c_str())->ip,
-                    msg
+                    _hashUserInfo.value(_hashId2Key.value(toId)->toStdString().c_str())->address,
+                    _hashUserInfo.value(_hashId2Key.value(toId)->toStdString().c_str())->ip,
+                    msgjdc.toJson().toStdString().c_str()
                     );
+        return;
     }
+    if(!jdc.object().find("control")->isNull())this->msgControl_control(jdc.object().find("control")->toObject(),id);
+
+
 
 
 }
 void control::msgControl_control(QJsonObject job, QString id)
 {
-    if(!job.find("exitRoom")->isNull())
+    if(!job.find("exitRoom")->toInt()==1)
     {
         if(_hashId2Key.contains(id))
         {
@@ -230,7 +242,9 @@ void control::msgControl_control(QJsonObject job, QString id)
             }
         }
     }
+
     if(job.find("connectTo")->isString())
+        //{"control":{"connectTo":"id"}}
     {
 
         QString connectToId=job.value("connectTo").toString();
@@ -258,13 +272,13 @@ void control::slot_connectToUser(QString id1,QString id2)
         if(b1)
         {
             //u1在房间里 u2加入u1
-            _hashUserInfo.value(_hashId2Key.value(id1)->toStdString().c_str())->joinRoom(
-                        _hashUserInfo.value(_hashId2Key.value(id2)->toStdString().c_str())->joining
+            _hashUserInfo.value(_hashId2Key.value(id2)->toStdString().c_str())->joinRoom(
+                        _hashUserInfo.value(_hashId2Key.value(id1)->toStdString().c_str())->joining
                         );
         }else{
             //u2在房间里 u1加入u2
-            _hashUserInfo.value(_hashId2Key.value(id2)->toStdString().c_str())->joinRoom(
-                        _hashUserInfo.value(_hashId2Key.value(id1)->toStdString().c_str())->joining
+            _hashUserInfo.value(_hashId2Key.value(id1)->toStdString().c_str())->joinRoom(
+                        _hashUserInfo.value(_hashId2Key.value(id2)->toStdString().c_str())->joining
                         );
         }
     }else{
@@ -272,13 +286,14 @@ void control::slot_connectToUser(QString id1,QString id2)
         _hashUserInfo.value(_hashId2Key.value(id2)->toStdString().c_str())->joinRoom(
                     _hashUserInfo.value(_hashId2Key.value(id1)->toStdString().c_str())->createRoom()
                     );
+        connect(_hashUserInfo.value(_hashId2Key.value(id1)->toStdString().c_str())->joining
+                ,&room::textForward
+                ,this,&control::slot_textForward);
+        connect(_hashUserInfo.value(_hashId2Key.value(id1)->toStdString().c_str())->joining
+                ,&room::dataForward
+                ,this,&control::slot_dataForward);
     }
-    connect(_hashUserInfo.value(_hashId2Key.value(id1)->toStdString().c_str())->joining
-            ,&room::textForward
-            ,this,&control::slot_textForward);
-    connect(_hashUserInfo.value(_hashId2Key.value(id1)->toStdString().c_str())->joining
-            ,&room::dataForward
-            ,this,&control::slot_dataForward);
+
 
 }
 void control::slot_textForward(QString toId,QString msg)

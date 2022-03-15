@@ -1,0 +1,12 @@
+发送消息
+{
+    "version":1,
+    "message2id":"message",       
+    "message2room":"message",
+    "control":{
+        "connectTo":"id",
+        "exitRoom":1
+    }
+}
+
+接收消息
