@@ -82,8 +82,8 @@ void wss::processBinauyMessage(const QByteArray & msg)//收到二进制数据
     {
         return;
     }
-    qDebug()<<"new binauy msg:"<<pWebSocket->peerAddress().toString()
-          <<pWebSocket->peerPort();
+    //qDebug()<<"new binauy msg:"<<pWebSocket->peerAddress().toString()
+    //    <<pWebSocket->peerPort();
     //      <<msg;
     //复读机
 //    QByteArray rmsg=msg;
@@ -110,7 +110,7 @@ int wss::slot_sendText(QString ip, quint16 port, QString msg)
 }
 int wss::slot_sendData(QString ip, quint16 port, QByteArray msg)
 {
-    qDebug()<<"sendData"<<QString("%1-%2").arg(ip).arg(port);//<<msg;
+    //qDebug()<<"sendData"<<QString("%1-%2").arg(ip).arg(port);//<<msg;
     QString key = QString("%1-%2").arg(ip).arg(port);
     if(hashIpPort2PWebSocket.contains(key))
     {

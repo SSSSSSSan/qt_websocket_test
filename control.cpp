@@ -225,7 +225,7 @@ void control::msgControl(QJsonDocument jdc,QString id)
 }
 void control::msgControl_control(QJsonObject job, QString id)
 {
-    qDebug().noquote()<<job;
+    //qDebug().noquote()<<job;
     if(job.find("exitRoom")->toInt()==1)
     {
         //{"control":{"exitRoom":1}}
@@ -242,7 +242,21 @@ void control::msgControl_control(QJsonObject job, QString id)
         //{"control":{"connectTo":"id"}}
     {
 
+
         QString connectToId=job.value("connectTo").toString();
+        if(id==connectToId)
+        {
+            QJsonDocument jdc;
+            QJsonObject job;
+            job.insert("echotype","conntrol");
+            job.insert("echo","自j!ao？");
+            jdc.setObject(job);
+            QString msg = jdc.toJson().toStdString().c_str();
+            emit signal_sendText(_hashUserInfo.value(_hashId2Key.value(id)->toStdString().c_str())->address
+                                 ,_hashUserInfo.value(_hashId2Key.value(id)->toStdString().c_str())->ip
+                                 ,msg);
+            return;
+        }
         qDebug()<<id<<"发起对"<<connectToId<<"的connectTo请求";
         if(_hashId2Key.contains(connectToId))
         {
