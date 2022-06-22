@@ -241,8 +241,6 @@ void control::msgControl_control(QJsonObject job, QString id)
     if(job.find("connectTo")->isString())
         //{"control":{"connectTo":"id"}}
     {
-
-
         QString connectToId=job.value("connectTo").toString();
         if(id==connectToId)
         {
@@ -299,13 +297,13 @@ void control::slot_connectToUser(QString id1,QString id2)
         if(b1)
         {
             //u1在房间里 u2加入u1
-            _hashUserInfo.value(_hashId2Key.value(id2)->toStdString().c_str())->joinRoom(
-                        _hashUserInfo.value(_hashId2Key.value(id1)->toStdString().c_str())->joining
+            _hashUserInfo.value(_hashId2Key.value(id2)->toStdString().c_str())
+                    ->joinRoom(_hashUserInfo.value(_hashId2Key.value(id1)->toStdString().c_str())->joining
                         );
         }else{
             //u2在房间里 u1加入u2
-            _hashUserInfo.value(_hashId2Key.value(id1)->toStdString().c_str())->joinRoom(
-                        _hashUserInfo.value(_hashId2Key.value(id2)->toStdString().c_str())->joining
+            _hashUserInfo.value(_hashId2Key.value(id1)->toStdString().c_str())
+                    ->joinRoom(_hashUserInfo.value(_hashId2Key.value(id2)->toStdString().c_str())->joining
                         );
         }
     }else{
@@ -313,6 +311,7 @@ void control::slot_connectToUser(QString id1,QString id2)
         _hashUserInfo.value(_hashId2Key.value(id2)->toStdString().c_str())->joinRoom(
                     _hashUserInfo.value(_hashId2Key.value(id1)->toStdString().c_str())->createRoom()
                     );
+
         connect(_hashUserInfo.value(_hashId2Key.value(id1)->toStdString().c_str())->joining
                 ,&room::textForward
                 ,this,&control::slot_textForward);

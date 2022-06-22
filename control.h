@@ -55,6 +55,8 @@ public:
     control();
     ~control();
     bool init();
+
+
 private:
 
     void msgControl(QJsonDocument jdc,QString id);
@@ -73,7 +75,7 @@ public slots:
     void slot_connectToUser(QString id1,QString id2);
     void slot_disConnectUser(QString id1,QString id2);
 private slots:
-    void slot_receivedText(QString address,quint16 ip,QString msg);//处理文字信息 rpn?
+    void slot_receivedText(QString address,quint16 ip,QString msg);//处理文字信息
     void slot_receivedData(QString address,quint16 ip,QByteArray msg);//处理二进制 基本只转发
     void slot_newU(QString ip,quint16 port,QUrl url);
     void slot_delU(QString ip,quint16 port);
